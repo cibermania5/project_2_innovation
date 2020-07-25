@@ -6,50 +6,54 @@
 package main
 
 import (
-	"context"
-	"fmt"
+	"./operations"
+	"github.com/gorilla/mux"
 	"log"
-	"time"
-
-	"./helper"
-	"./models"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/bson/primitive"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
+	"net/http"
 )
 
-var client *mongo.Client
-type clientOptions *options.ClientOptions
-var clOpt clientOptions
 
-
+//type clientOptions *options.ClientOptions
+//var clOpt clientOptions
 
 
 
 func main() {
-	client := helper.ConnectDB("testt", "abc")
+	r:= mux.NewRouter()
+
+	r.HandleFunc("/casas/consulta/{id}", operations.GetCasa).Methods("GET")
+	r.HandleFunc("/casas/nuevo", operations.CreaCasa).Methods("POST")
+	r.HandleFunc("/casas/multas/{id}/{ms}", operations.AniadeMultas).Methods("PATCH")
+	r.HandleFunc("/casas/consulta", operations.GetTodos).Methods("GET")
 
 
-	now := time.Now()
-	t := models.Cobro{
-		Monto:  323132131.0,
-		Fecha:  now,
-	}
+	//now := time.Now()
 
-	res, err := client.InsertOne(context.TODO(), bson.D{
-		{"monto", t.Monto},
-		{"createdAt", primitive.DateTime(timeToMillis(t.Fecha))},
-	})
+
+	log.Fatal(http.ListenAndServe(":8000", r))
+
+	/*id, _ := primitive.ObjectIDFromHex("5f1b610820d9c27b71722e42")
+	filter := bson.M{"_id": id}
+
+	var rr models.Casa
+
+	err := client.FindOne(context.TODO(), filter).Decode(&rr)
 
 	if err != nil {
-		log.Fatal(err)
+		fmt.Println(err)
 	}
 
-	fmt.Println(res.InsertedID.(primitive.ObjectID).Hex())
 
-}
+	fmt.Println("objeto: ", rr)*/
+	//fmt.Println(res.InsertedID.(primitive.ObjectID).Hex())
 
-func timeToMillis(t time.Time) int64 {
-	return t.UnixNano() / int64(time.Millisecond)
+
+
+/*
+	var casa []bson.M
+	if err = cursor.All(context.TODO(), &casa); err != nil {
+		log.Fatal(err)
+		panic(err)
+	}
+	fmt.Println(casa)*/
 }
