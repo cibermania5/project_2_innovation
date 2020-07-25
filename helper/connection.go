@@ -15,7 +15,6 @@ type clientOptions *options.ClientOptions
 
 func clientOpts() clientOptions {
 	str := "mongodb://localhost:27017"
-	//		"mongodb+srv://condma:Ff46jYPGB3hJrJ0e@cluster0.t27ap.mongodb.net/condma?retryWrites=true&w=majority"
 	return options.Client().ApplyURI(str)
 }
 
