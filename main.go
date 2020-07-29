@@ -13,47 +13,19 @@ import (
 )
 
 
-//type clientOptions *options.ClientOptions
-//var clOpt clientOptions
-
-
-
 func main() {
 	r:= mux.NewRouter()
 
 	r.HandleFunc("/casas/consulta/{id}", operations.GetCasa).Methods("GET")
 	r.HandleFunc("/casas/nuevo", operations.CreaCasa).Methods("POST")
-	r.HandleFunc("/casas/multas/{id}/{ms}", operations.AniadeMultas).Methods("PATCH")
+	r.HandleFunc("/casas/multas/{id}", operations.AniadeMultas).Methods("PATCH")
 	r.HandleFunc("/casas/consulta", operations.GetTodos).Methods("GET")
-
-
-	//now := time.Now()
-
-
+	r.HandleFunc("/casas/saldo/{id}", operations.CalculaTotalCasa).Methods("GET")
+	r.HandleFunc("/casas/pagar/{id}", operations.Pagar).Methods("PATCH")
+	/*r.HandleFunc("/mensajes/nuevo", operations.CreaMensaje).Methods("POST")
+	r.HandleFunc("/mensajes/consulta/{id}", operations.GetMensaje).Methods("GET")
+	r.HandleFunc("/mensajes/consulta", operations.GetMensajes).Methods("GET")
+	r.HandleFunc("/mensajes/actualiza/{id}", operations.ActualizaMensajes).Methods("PATCH")*/
 	log.Fatal(http.ListenAndServe(":8000", r))
 
-	/*id, _ := primitive.ObjectIDFromHex("5f1b610820d9c27b71722e42")
-	filter := bson.M{"_id": id}
-
-	var rr models.Casa
-
-	err := client.FindOne(context.TODO(), filter).Decode(&rr)
-
-	if err != nil {
-		fmt.Println(err)
-	}
-
-
-	fmt.Println("objeto: ", rr)*/
-	//fmt.Println(res.InsertedID.(primitive.ObjectID).Hex())
-
-
-
-/*
-	var casa []bson.M
-	if err = cursor.All(context.TODO(), &casa); err != nil {
-		log.Fatal(err)
-		panic(err)
-	}
-	fmt.Println(casa)*/
 }

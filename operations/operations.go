@@ -5,12 +5,10 @@ import (
 	"../models"
 	"context"
 	"encoding/json"
+	"fmt"
 	"github.com/gorilla/mux"
 	"log"
 	"net/http"
-	"time"
-
-	"fmt"
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
@@ -21,98 +19,119 @@ import (
 type clientOptions *options.ClientOptions
 var clOpt clientOptions
 
+
+type (
+	// Response is the http json response schema
+	Response struct {
+		Status  int         `json:"status"`
+		Message string      `json:"message"`
+		Content interface{} `json:"content"`
+	}
+
+	// PaginatedResponse is the paginated response json schema
+	// we not use it yet
+	PaginatedResponse struct {
+		Count    int         `json:"count"`
+		Next     string      `json:"next"`
+		Previous string      `json:"previous"`
+		Results  interface{} `json:"results"`
+	}
+
+	pipelineres struct {
+		ID string `bson:"_id"`
+		cantidad int `bson:"cantidad"`
+	}
+)
+
+// NewResponse is the Response struct factory function.
+func NewResponse(status int, message string, content interface{}) *Response {
+	return &Response{
+		Status:  status,
+		Message: message,
+		Content: content,
+	}
+}
+
 func getClient() *mongo.Collection {
-	return helper.ConnectDB("testt", "tres")
+	return helper.ConnectDB("testt", "a")
 }
 
 
 func GetCasa(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
 	client := getClient()
-	id, _ := primitive.ObjectIDFromHex(string(mux.Vars(r)["id"])) //primitive.ObjectIDFromHex("5f1b610820d9c27b71722e42")
-	//id, _ := primitive.ObjectIDFromHex(mux.Vars(r)) //primitive.ObjectIDFromHex("5f1b610820d9c27b71722e42")
+	id, _ := primitive.ObjectIDFromHex(string(mux.Vars(r)["id"]))
 	filter := bson.M{"_id": id}
-
-	var rr models.Casa
-
-	err := client.FindOne(context.TODO(), filter).Decode(&rr)
-
+	var casa models.Casa
+	err := client.FindOne(context.TODO(), filter).Decode(&casa)
 	if err != nil {
 		fmt.Println(err)
 	}
-
-
-	json.NewEncoder(w).Encode(rr)
-
+	ResponseWriter(w, http.StatusOK, "", casa)
 }
 
 func CreaCasa(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	fmt.Println("kdaspokjas``fkas`")
-	now := time.Now()
-
-	/*var casa models.Casa
-
-	// we decode our body request params
-	_ = json.NewDecoder(r.Body).Decode(&casa)
-
-	result, err := getClient().InsertOne(context.TODO(), casa)*/
-
-	val := true
-	test := models.Casa{
-		ID: primitive.NewObjectID(),
-		Casa: "casa03", Nombre: "Byron", Debe: val,
-		Cobros: []models.Cobro{
-			//{2000,"perros cagando", now},
-			{800, "mantenimiento", now}},
-
-	}
-
-	result, err := getClient().InsertOne(context.TODO(), test)
-
+	defer r.Body.Close()
+	var casa models.Casa
+	err := json.NewDecoder(r.Body).Decode(&casa)
 	if err != nil {
-		helper.GetError(err, w)
+		ResponseWriter(w, http.StatusBadRequest, "body json request have issues!!!", nil)
 		return
 	}
-
-	json.NewEncoder(w).Encode(result)
+	casa.ID = primitive.NewObjectID()
+	result, err := getClient().InsertOne(nil, casa)
+	if err != nil {
+		switch err.(type) {
+		case mongo.WriteException:
+			ResponseWriter(w, http.StatusNotAcceptable, "username or email already exists in database.", nil)
+		default:
+			ResponseWriter(w, http.StatusInternalServerError, "Error while inserting data.", nil)
+		}
+		return
+	}
+	casa.ID = result.InsertedID.(primitive.ObjectID)
+	ResponseWriter(w, http.StatusCreated, "", casa)
 }
 
 func AniadeMultas(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-
-	/*for k, v := range mux.Vars(r) {
-		fmt.Printf("key[%s] value[%s]\n", k, v)
-
-	}*/
-	cobro := models.Cobro{}
-
-	//fmt.Println(mux.Vars(r)["ms"])
-
-	d := json.Unmarshal([]byte(mux.Vars(r)["ms"]), &cobro)
-
-	fmt.Println("que ", d)
-	/*now := time.Now()
-	client := getClient()
-	id, _ := primitive.ObjectIDFromHex(string(mux.Vars(r)["id"]))
-	t := models.Cobro{400, "por cholo", now}
-
-
-	var res, err = client.UpdateOne(context.TODO(),
-		bson.M{"_id": id},
-		bson.M{
-			"$addToSet": bson.M{"cobro": t},
-		})
-
-	fmt.Println("count ", res.MatchedCount)
+	var updateData map[string]interface{}
+	err := json.NewDecoder(r.Body).Decode(&updateData)
 	if err != nil {
-		log.Fatal("32132 ", err)
+		ResponseWriter(w, http.StatusBadRequest, "json body is incorrect", nil)
+		return
 	}
-
-	json.NewEncoder(w).Encode(res)*/
+	// we dont handle the json decode return error because all our fields have the omitempty tag.
+	var params = mux.Vars(r)
+	oid, err := primitive.ObjectIDFromHex(params["id"])
+	fmt.Println("oid ", oid)
+	if err != nil {
+		ResponseWriter(w, http.StatusBadRequest, "id that you sent is wrong!!!", nil)
+		return
+	}
+	update := bson.M{
+		//"$addToSet": updateData,
+		//"$addToSet": bson.M{"cobro": updateData},
+		"$push": bson.M{"cobros": updateData},
+		"$set": bson.M{ "debe": true } ,
+	}
+	result, err := getClient().UpdateOne(context.Background(), bson.M{"_id": oid}, update)
+	if err != nil {
+		log.Printf("Error while updateing document: %v", err)
+		ResponseWriter(w, http.StatusInternalServerError, "error in updating document!!!", nil)
+		return
+	}
+	if result.MatchedCount == 1 {
+		ResponseWriter(w, http.StatusOK, "", &updateData)
+	} else {
+		ResponseWriter(w, http.StatusNotFound, "person not found", nil)
+	}
 }
 
 func GetTodos(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
 	client := getClient()
 	cursor, err := client.Find(context.TODO(), bson.M{})
 	if err != nil {
@@ -123,7 +142,6 @@ func GetTodos(w http.ResponseWriter, r *http.Request) {
 	}
 
 	defer cursor.Close(context.TODO())
-
 	var todasLasCasas []*models.Casa
 	for cursor.Next(context.TODO()){
 		var casa models.Casa
@@ -132,11 +150,81 @@ func GetTodos(w http.ResponseWriter, r *http.Request) {
 		}
 		todasLasCasas = append(todasLasCasas, &casa)
 	}
-
 	//jsonRes, err := json.Marshal(&todasLasCasas)
 	//fmt.Println(string(jsonRes))
+	//json.NewEncoder(w).Encode(&todasLasCasas)
+	ResponseWriter(w, http.StatusOK, "", &todasLasCasas)
+
+}
+func CalculaTotalCasa(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	id, _ := primitive.ObjectIDFromHex(string(mux.Vars(r)["id"]))
+
+	pipeline := []bson.M{
+		bson.M{ "$match":
+		bson.M{ "_id":  id} },
+		bson.M{"$unwind": "$cobros"},
+		bson.M{ "$group": bson.M{ "_id": "null", "cantidad": bson.M{"$sum": "$cobros.monto"}}},
+		bson.M{"$project": bson.M{"_id": 0} },
+
+	}
+	client := getClient()
+	data, err :=  client.Aggregate(context.TODO(), pipeline)
+
+	if err != nil {
+		fmt.Println("data ", data)
+		log.Println(err.Error())
+		fmt.Errorf("failed to execute aggregation %s", err.Error())
+		return
+	}
+
+	var pipelineResult  []bson.M
+
+	fmt.Println("da ", data.ID())
+	err = data.All(context.TODO(), &pipelineResult)
+
+	if err != nil {
+		log.Println(err.Error())
+		fmt.Errorf("failed to decode results", err.Error())
+		return
+	}
+
+	value, _ := pipelineResult[0]["cantidad"]
+	fmt.Println("val: ", value)
+
+	ResponseWriter(w, http.StatusOK, "", pipelineResult[0])
+}
+
+func Pagar(w http.ResponseWriter, r *http.Request){
+	w.Header().Set("Content-Type", "application/json")
+	id, _ := primitive.ObjectIDFromHex(string(mux.Vars(r)["id"]))
+	client := getClient()
+	var updateData map[string]interface{}
+	err := json.NewDecoder(r.Body).Decode(&updateData)
+	update := bson.M{
+		//"$addToSet": updateData,
+		//"$addToSet": bson.M{"cobro": updateData},
+		//"$push": bson.M{"cobros": updateData},
+		"$unset": bson.M{ "cobros": "" } ,
+		"$set": bson.M{ "debe": false } ,
+	}
+	result, err := client.UpdateOne(context.Background(), bson.M{"_id": id}, update)
+	if err != nil {
+		log.Printf("Error while updateing document: %v", err)
+		ResponseWriter(w, http.StatusInternalServerError, "error in updating document!!!", nil)
+		return
+	}
+	if result.MatchedCount == 1 {
+		ResponseWriter(w, http.StatusOK, "", &updateData)
+	} else {
+		ResponseWriter(w, http.StatusNotFound, "person not found", nil)
+	}
+}
 
 
-	json.NewEncoder(w).Encode(&todasLasCasas)
-
+func ResponseWriter(res http.ResponseWriter, statusCode int, message string, data interface{}) error {
+	res.WriteHeader(statusCode)
+	httpResponse := NewResponse(statusCode, message, data)
+	err := json.NewEncoder(res).Encode(httpResponse)
+	return err
 }
