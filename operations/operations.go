@@ -126,7 +126,7 @@ func AniadeMultas(w http.ResponseWriter, r *http.Request) {
 	if result.MatchedCount == 1 {
 		ResponseWriter(w, http.StatusOK, "", &updateData)
 	} else {
-		ResponseWriter(w, http.StatusNotFound, "person not found", nil)
+		ResponseWriter(w, http.StatusNotFound, "Casa not found", nil)
 	}
 }
 
@@ -180,7 +180,7 @@ func CalculaTotalCasa(w http.ResponseWriter, r *http.Request) {
 
 	var pipelineResult  []bson.M
 
-	fmt.Println("da ", data.ID())
+	//fmt.Println("da ", data.ID())
 	err = data.All(context.TODO(), &pipelineResult)
 
 	if err != nil {
@@ -189,10 +189,20 @@ func CalculaTotalCasa(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	value, _ := pipelineResult[0]["cantidad"]
-	fmt.Println("val: ", value)
+	/*value, err2 := pipelineResult[0]["cantidad"]
+	if err 2!= nil {
+		log.Println(err.Error())
+		fmt.Errorf("failed to decode results", err.Error())
+		return
+	}*/
 
-	ResponseWriter(w, http.StatusOK, "", pipelineResult[0])
+	//ResponseWriter(w, http.StatusOK, "", pipelineResult[0])
+
+	if  len(pipelineResult) > 0  {
+		ResponseWriter(w, http.StatusOK, "", pipelineResult[0])
+	} else {
+		ResponseWriter(w, http.StatusNotFound, "La persona no tiene adeudo", nil)
+	}
 }
 
 func Pagar(w http.ResponseWriter, r *http.Request){
