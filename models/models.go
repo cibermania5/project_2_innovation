@@ -23,5 +23,6 @@ type TableroMsg struct{
 	 ID      		primitive.ObjectID 	`json:"_id,omitempty" bson:"_id.omitempty"`
 	 Mensaje 		string 				`json:"mensaje,omitempty" bson:"mensaje,omitempty"`
 	 Habilitado    	int8               	`json:"habilitado,omitempty" bson:"habilitado,omitempty"`
+	 Tipo			int16				`json:"tipo,omitempty" bson:"tipo,omitempty"`
 }
 
