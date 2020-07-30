@@ -34,6 +34,7 @@ func main() {
 	r.HandleFunc("/mensajes/actualiza/{id}", operations.ActualizaMensajes).Methods("PATCH")
 
 
+	//log.Fatal("falló por: ", http.ListenAndServe(":5801", r))
 	err := http.ListenAndServe(":5801", r)
 	if err != nil {
 		fmt.Println("falló por: ", err)

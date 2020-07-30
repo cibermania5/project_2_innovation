@@ -18,7 +18,7 @@ import (
 
 
 func getClient() *mongo.Collection {
-	return helper.ConnectDB("prod", "casas5")
+	return helper.ConnectDB("condma", "casas")
 }
 
 
@@ -52,9 +52,9 @@ func CreaCasa(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		switch err.(type) {
 		case mongo.WriteException:
-			ResponseWriter(w, http.StatusNotAcceptable, "Casa already exists in database.", nil)
+			ResponseWriter(w, http.StatusNotAcceptable, "Casa already exists in database.", err)
 		default:
-			ResponseWriter(w, http.StatusInternalServerError, "Error while inserting data.", nil)
+			ResponseWriter(w, http.StatusInternalServerError, "Error while inserting data.", err)
 		}
 		return
 	}
