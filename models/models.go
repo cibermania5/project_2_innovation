@@ -6,11 +6,10 @@ import (
 )
 
 type Casa struct {
-	// ID     		primitive.ObjectID `json:"_id,omitempty" bson:"_id.omitempty"`
 	 ID     		primitive.ObjectID `json:"_id" bson:"_id"`
 	 Casa   		string             `json:"casa,omitempty" bson:"casa,omitempty"`
 	 Nombre 		string             `json:"nombre,omitempty" bson:"nombre,omitempty"`
-	 Debe   		bool               `json:"debe,omitempty" bson:"debe,omitempty"`
+	 Debe   		int8               `json:"debe,omitempty" bson:"debe,omitempty"`
 	 Cobros[] 		Cobro            	`json:"cobros,omitempty" bson:"cobros,omitempty"`
 }
 
@@ -23,6 +22,6 @@ type Cobro struct {
 type TableroMsg struct{
 	 ID      		primitive.ObjectID 	`json:"_id,omitempty" bson:"_id.omitempty"`
 	 Mensaje 		string 				`json:"mensaje,omitempty" bson:"mensaje,omitempty"`
-	 habilitado    	bool               	`json:"debe,omitempty" bson:"debe,omitempty"`
+	 Habilitado    	int8               	`json:"habilitado,omitempty" bson:"habilitado,omitempty"`
 }
 

@@ -13,47 +13,12 @@ import (
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/bson/primitive"
 	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
 )
 
-type clientOptions *options.ClientOptions
-var clOpt clientOptions
 
-
-type (
-	// Response is the http json response schema
-	Response struct {
-		Status  int         `json:"status"`
-		Message string      `json:"message"`
-		Content interface{} `json:"content"`
-	}
-
-	// PaginatedResponse is the paginated response json schema
-	// we not use it yet
-	PaginatedResponse struct {
-		Count    int         `json:"count"`
-		Next     string      `json:"next"`
-		Previous string      `json:"previous"`
-		Results  interface{} `json:"results"`
-	}
-
-	pipelineres struct {
-		ID string `bson:"_id"`
-		cantidad int `bson:"cantidad"`
-	}
-)
-
-// NewResponse is the Response struct factory function.
-func NewResponse(status int, message string, content interface{}) *Response {
-	return &Response{
-		Status:  status,
-		Message: message,
-		Content: content,
-	}
-}
 
 func getClient() *mongo.Collection {
-	return helper.ConnectDB("testt", "a")
+	return helper.ConnectDB("prod", "casas")
 }
 
 
@@ -115,7 +80,7 @@ func AniadeMultas(w http.ResponseWriter, r *http.Request) {
 		//"$addToSet": updateData,
 		//"$addToSet": bson.M{"cobro": updateData},
 		"$push": bson.M{"cobros": updateData},
-		"$set": bson.M{ "debe": true } ,
+		"$set": bson.M{ "debe": 1 } ,
 	}
 	result, err := getClient().UpdateOne(context.Background(), bson.M{"_id": oid}, update)
 	if err != nil {
@@ -211,12 +176,20 @@ func Pagar(w http.ResponseWriter, r *http.Request){
 	client := getClient()
 	var updateData map[string]interface{}
 	err := json.NewDecoder(r.Body).Decode(&updateData)
-	update := bson.M{
+	/*update := bson.M{
 		//"$addToSet": updateData,
 		//"$addToSet": bson.M{"cobro": updateData},
 		//"$push": bson.M{"cobros": updateData},
 		"$unset": bson.M{ "cobros": "" } ,
 		"$set": bson.M{ "debe": false } ,
+	}*/
+	//val := false
+	update := bson.M{
+		"$set":
+			bson.M{
+			"debe": 0,
+			//"nombre": "dsadas",
+		},
 	}
 	result, err := client.UpdateOne(context.Background(), bson.M{"_id": id}, update)
 	if err != nil {
@@ -231,10 +204,3 @@ func Pagar(w http.ResponseWriter, r *http.Request){
 	}
 }
 
-
-func ResponseWriter(res http.ResponseWriter, statusCode int, message string, data interface{}) error {
-	res.WriteHeader(statusCode)
-	httpResponse := NewResponse(statusCode, message, data)
-	err := json.NewEncoder(res).Encode(httpResponse)
-	return err
-}
