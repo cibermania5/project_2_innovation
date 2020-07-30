@@ -19,7 +19,7 @@ import (
 
 
 func getClient2() *mongo.Collection {
-	return helper.ConnectDB("prod", "mensajes3")
+	return helper.ConnectDB("prod", "mensajes5")
 }
 
 
@@ -38,7 +38,7 @@ func CreaMensaje(w http.ResponseWriter, r *http.Request){
 	if err != nil {
 		switch err.(type) {
 		case mongo.WriteException:
-			ResponseWriter(w, http.StatusNotAcceptable, "username or email already exists in database.", nil)
+			ResponseWriter(w, http.StatusNotAcceptable, "Mensaje already exists in database.", nil)
 		default:
 			ResponseWriter(w, http.StatusInternalServerError, "Error while inserting data.", nil)
 		}
@@ -88,6 +88,12 @@ func GetMensajes(w http.ResponseWriter, r *http.Request) {
 	}
 
 	ResponseWriter(w, http.StatusOK, "", &msgs)
+
+	if len(msgs) != 0 {
+		ResponseWriter(w, http.StatusOK, "", &msgs)
+	} else {
+		ResponseWriter(w, http.StatusNotFound, "Casa not found", nil)
+	}
 
 }
 
