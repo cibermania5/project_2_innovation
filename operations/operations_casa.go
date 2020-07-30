@@ -18,7 +18,7 @@ import (
 
 
 func getClient() *mongo.Collection {
-	return helper.ConnectDB("prod", "casas3")
+	return helper.ConnectDB("prod", "casas5")
 }
 
 
@@ -32,6 +32,7 @@ func GetCasa(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		fmt.Println(err)
 		ResponseWriter(w, http.StatusInternalServerError, "error in adding document!!!", nil)
+		return
 	}
 	ResponseWriter(w, http.StatusOK, "", casa)
 }
@@ -51,7 +52,7 @@ func CreaCasa(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		switch err.(type) {
 		case mongo.WriteException:
-			ResponseWriter(w, http.StatusNotAcceptable, "username or email already exists in database.", nil)
+			ResponseWriter(w, http.StatusNotAcceptable, "Casa already exists in database.", nil)
 		default:
 			ResponseWriter(w, http.StatusInternalServerError, "Error while inserting data.", nil)
 		}
@@ -71,8 +72,7 @@ func AniadeMultas(w http.ResponseWriter, r *http.Request) {
 	}
 	// we dont handle the json decode return error because all our fields have the omitempty tag.
 	var params = mux.Vars(r)
-	oid, err := primitive.ObjectIDFromHex(params["id"])
-	fmt.Println("oid ", oid)
+	oid := params["id"]//primitive.ObjectIDFromHex(params["id"])
 	if err != nil {
 		ResponseWriter(w, http.StatusBadRequest, "id that you sent is wrong!!!", nil)
 		return
@@ -80,13 +80,14 @@ func AniadeMultas(w http.ResponseWriter, r *http.Request) {
 	update := bson.M{
 		//"$addToSet": updateData,
 		//"$addToSet": bson.M{"cobro": updateData},
+		//bson.M{"casa": oid},
 		"$push": bson.M{"cobros": updateData},
 		"$set": bson.M{ "debe": 1 } ,
 	}
-	result, err := getClient().UpdateOne(context.Background(), bson.M{"_id": oid}, update)
+	result, err := getClient().UpdateOne(context.Background(), bson.M{"casa": oid}, update)
 	if err != nil {
 		log.Printf("Error while updateing document: %v", err)
-		ResponseWriter(w, http.StatusInternalServerError, "error in updating document!!!", nil)
+		ResponseWriter(w, http.StatusInternalServerError, "error in updating document!!!", err)
 		return
 	}
 	if result.MatchedCount == 1 {
@@ -105,7 +106,7 @@ func GetTodos(w http.ResponseWriter, r *http.Request) {
 			"", err)
 		//panic(err)
 		ResponseWriter(w, http.StatusInternalServerError, "error in getting document!!!", nil)
-
+		return
 	}
 
 	defer cursor.Close(context.TODO())
@@ -115,13 +116,19 @@ func GetTodos(w http.ResponseWriter, r *http.Request) {
 		if err = cursor.Decode(&casa); err != nil{
 			log.Fatal("la muerte")
 			ResponseWriter(w, http.StatusInternalServerError, "error in getting document!!!", nil)
+			return
 		}
 		todasLasCasas = append(todasLasCasas, &casa)
 	}
 	//jsonRes, err := json.Marshal(&todasLasCasas)
 	//fmt.Println(string(jsonRes))
 	//json.NewEncoder(w).Encode(&todasLasCasas)
-	ResponseWriter(w, http.StatusOK, "", &todasLasCasas)
+
+	if len(todasLasCasas) != 0 {
+		ResponseWriter(w, http.StatusOK, "", &todasLasCasas)
+	} else {
+		ResponseWriter(w, http.StatusNotFound, "Casa not found", nil)
+	}
 
 }
 func CalculaTotalCasa(w http.ResponseWriter, r *http.Request) {
