@@ -123,7 +123,7 @@ func GetTodos(w http.ResponseWriter, r *http.Request) {
 	//jsonRes, err := json.Marshal(&todasLasCasas)
 	//fmt.Println(string(jsonRes))
 	//json.NewEncoder(w).Encode(&todasLasCasas)
-
+	//
 	if len(todasLasCasas) != 0 {
 		ResponseWriter(w, http.StatusOK, "", &todasLasCasas)
 	} else {
@@ -216,3 +216,37 @@ func Pagar(w http.ResponseWriter, r *http.Request){
 	}
 }
 
+func CambiaDebe(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	var updateData map[string]interface{}
+	err := json.NewDecoder(r.Body).Decode(&updateData)
+	if err != nil {
+		ResponseWriter(w, http.StatusBadRequest, "json body is incorrect", nil)
+		return
+	}
+	// we dont handle the json decode return error because all our fields have the omitempty tag.
+	var params = mux.Vars(r)
+	oid := params["id"]//primitive.ObjectIDFromHex(params["id"])
+	if err != nil {
+		ResponseWriter(w, http.StatusBadRequest, "id that you sent is wrong!!!", nil)
+		return
+	}
+	update := bson.M{
+		//"$addToSet": updateData,
+		//"$addToSet": bson.M{"cobro": updateData},
+		//bson.M{"casa": oid},
+		//"$push": bson.M{"cobros": updateData},
+		"$set": bson.M{ "debe": 1 } ,
+	}
+	result, err := getClient().UpdateOne(context.Background(), bson.M{"casa": oid}, update)
+	if err != nil {
+		log.Printf("Error while updateing document: %v", err)
+		ResponseWriter(w, http.StatusInternalServerError, "error in updating document!!!", err)
+		return
+	}
+	if result.MatchedCount == 1 {
+		ResponseWriter(w, http.StatusOK, "", &updateData)
+	} else {
+		ResponseWriter(w, http.StatusNotFound, "Casa not found", nil)
+	}
+}
