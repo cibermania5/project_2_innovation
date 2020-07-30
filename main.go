@@ -24,7 +24,7 @@ func main() {
 	r.HandleFunc("/casas/consulta/{id}", operations.GetCasa).Methods("GET")
 	r.HandleFunc("/casas/nuevo", operations.CreaCasa).Methods("POST")
 	r.HandleFunc("/casas/multas/{id}", operations.AniadeMultas).Methods("PATCH")
-	r.HandleFunc("/casas/multas/{id}", operations.CambiaDebe).Methods("PATCH")
+	r.HandleFunc("/casas/debe/{id}", operations.CambiaDebe).Methods("PATCH")
 	r.HandleFunc("/casas/consulta", operations.GetTodos).Methods("GET")
 	r.HandleFunc("/casas/saldo/{id}", operations.CalculaTotalCasa).Methods("GET")
 	r.HandleFunc("/casas/pagar/{id}", operations.Pagar).Methods("PATCH")
