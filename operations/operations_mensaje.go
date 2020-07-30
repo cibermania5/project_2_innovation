@@ -19,7 +19,7 @@ import (
 
 
 func getClient2() *mongo.Collection {
-	return helper.ConnectDB("prod", "mensajes5")
+	return helper.ConnectDB("condma", "mensajes")
 }
 
 
@@ -87,12 +87,12 @@ func GetMensajes(w http.ResponseWriter, r *http.Request) {
 		msgs = append(msgs, &msg)
 	}
 
-	ResponseWriter(w, http.StatusOK, "", &msgs)
+	//ResponseWriter(w, http.StatusOK, "", &msgs)
 
 	if len(msgs) != 0 {
 		ResponseWriter(w, http.StatusOK, "", &msgs)
 	} else {
-		ResponseWriter(w, http.StatusNotFound, "Casa not found", nil)
+		ResponseWriter(w, http.StatusNotFound, "Sin mensajes", nil)
 	}
 
 }

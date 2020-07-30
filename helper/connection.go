@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"time"
 
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
@@ -23,14 +24,20 @@ func clientOpts() clientOptions {
 func ConnectDB(dbname string, col string) *mongo.Collection {
 
 	// Set client options
-	clientOptions := clientOpts()
+	/*clientOptions := clientOpts()
 
 	// Connect to MongoDB
 	client, err := mongo.Connect(context.TODO(), clientOptions)
 
 	if err != nil {
 		log.Fatal(err)
-	}
+	}*/
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	client, err := mongo.Connect(ctx, options.Client().ApplyURI(
+		"mongodb+srv://condma:6oRFOQrabCGUKyEI@cluster0.t27ap.mongodb.net/condma?retryWrites=true&w=majority",
+	))
+	if err != nil { log.Fatal(err) }
 
 	fmt.Println("Connected to MongoDB!")
 
