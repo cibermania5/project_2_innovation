@@ -19,7 +19,7 @@ import (
 
 
 func getClient2() *mongo.Collection {
-	return helper.ConnectDB("prod", "mensajes")
+	return helper.ConnectDB("prod", "mensajes3")
 }
 
 
@@ -58,6 +58,7 @@ func GetMensaje(w http.ResponseWriter, r *http.Request){
 	err := client.FindOne(context.TODO(), filter).Decode(&msg)
 	if err != nil {
 		fmt.Println(err)
+		ResponseWriter(w, http.StatusInternalServerError, "error in updating document!!!", nil)
 	}
 	ResponseWriter(w, http.StatusOK, "", msg)
 }
@@ -69,7 +70,8 @@ func GetMensajes(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Fatal("pendejo " +
 			"", err)
-		panic(err)
+		//panic(err)
+		ResponseWriter(w, http.StatusInternalServerError, "error in updating document!!!", nil)
 
 	}
 
@@ -79,6 +81,8 @@ func GetMensajes(w http.ResponseWriter, r *http.Request) {
 		var msg models.TableroMsg
 		if err = cursor.Decode(&msg); err != nil{
 			log.Fatal("la muerte")
+			ResponseWriter(w, http.StatusInternalServerError, "error in updating document!!!", nil)
+			return
 		}
 		msgs = append(msgs, &msg)
 	}
