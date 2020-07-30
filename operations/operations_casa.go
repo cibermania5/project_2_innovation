@@ -18,7 +18,7 @@ import (
 
 
 func getClient() *mongo.Collection {
-	return helper.ConnectDB("prod", "casas")
+	return helper.ConnectDB("prod", "casas3")
 }
 
 
@@ -31,6 +31,7 @@ func GetCasa(w http.ResponseWriter, r *http.Request) {
 	err := client.FindOne(context.TODO(), filter).Decode(&casa)
 	if err != nil {
 		fmt.Println(err)
+		ResponseWriter(w, http.StatusInternalServerError, "error in adding document!!!", nil)
 	}
 	ResponseWriter(w, http.StatusOK, "", casa)
 }
@@ -102,7 +103,8 @@ func GetTodos(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Fatal("pendejo " +
 			"", err)
-		panic(err)
+		//panic(err)
+		ResponseWriter(w, http.StatusInternalServerError, "error in getting document!!!", nil)
 
 	}
 
@@ -112,6 +114,7 @@ func GetTodos(w http.ResponseWriter, r *http.Request) {
 		var casa models.Casa
 		if err = cursor.Decode(&casa); err != nil{
 			log.Fatal("la muerte")
+			ResponseWriter(w, http.StatusInternalServerError, "error in getting document!!!", nil)
 		}
 		todasLasCasas = append(todasLasCasas, &casa)
 	}
@@ -140,6 +143,7 @@ func CalculaTotalCasa(w http.ResponseWriter, r *http.Request) {
 		fmt.Println("data ", data)
 		log.Println(err.Error())
 		fmt.Errorf("failed to execute aggregation %s", err.Error())
+		ResponseWriter(w, http.StatusInternalServerError, "error in updating document!!!", nil)
 		return
 	}
 
@@ -151,6 +155,7 @@ func CalculaTotalCasa(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		log.Println(err.Error())
 		fmt.Errorf("failed to decode results", err.Error())
+		ResponseWriter(w, http.StatusInternalServerError, "error in updating document!!!", nil)
 		return
 	}
 
