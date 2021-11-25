@@ -35,7 +35,7 @@ func ConnectDB(dbname string, col string) *mongo.Collection {
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	client, err := mongo.Connect(ctx, options.Client().ApplyURI(
-		"mongodb+srv://condma:6oRF",
+		"mongodb+srv://jiojhoi",
 	))
 	if err != nil { log.Fatal(err) }
 
